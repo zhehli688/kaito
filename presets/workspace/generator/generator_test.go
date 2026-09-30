@@ -444,6 +444,55 @@ func TestToolCallParserMap(t *testing.T) {
 	}
 }
 
+func TestVLLM030ParserMappings(t *testing.T) {
+	tests := []struct {
+		name      string
+		modelName string
+		arch      string
+		reasoning string
+		tool      string
+	}{
+		{name: "DeepSeek V4.1 prefix takes precedence", modelName: "deepseek-v4.1-chat", reasoning: "deepseek_v41", tool: "deepseek_v41"},
+		{name: "Kimi K3 prefix", modelName: "kimi-k3-thinking", reasoning: "kimi_k3", tool: "kimi_k3"},
+		{name: "HY V4 prefix", modelName: "hy-v4", reasoning: "hy_v4", tool: "hy_v4"},
+		{name: "K2 Horizon prefix", modelName: "k2-horizon", reasoning: "k2_horizon", tool: "k2_horizon"},
+		{name: "Inkling prefix", modelName: "inkling-instruct", reasoning: "inkling", tool: "inkling"},
+		{name: "Muse Glimmer prefix", modelName: "muse-glimmer", reasoning: "muse_glimmer", tool: "muse_glimmer"},
+		{name: "DeepSeek V4.1 architecture", modelName: "custom", arch: "DeepseekV41ForCausalLM", reasoning: "deepseek_v41", tool: "deepseek_v41"},
+		{name: "DeepSeek V4 architecture", modelName: "custom", arch: "DeepseekV4ForCausalLM", reasoning: "deepseek_v4", tool: "deepseek_v4"},
+		{name: "DeepSeek V4 conditional architecture", modelName: "custom", arch: "DeepseekV4ForConditionalGeneration", reasoning: "deepseek_v4", tool: "deepseek_v4"},
+		{name: "Kimi K3 architecture", modelName: "custom", arch: "KimiK3ForConditionalGeneration", reasoning: "kimi_k3", tool: "kimi_k3"},
+		{name: "HY V4 architecture", modelName: "custom", arch: "HYV4ForCausalLM", reasoning: "hy_v4", tool: "hy_v4"},
+		{name: "K2 Horizon architecture", modelName: "custom", arch: "K2HorizonForCausalLM", reasoning: "k2_horizon", tool: "k2_horizon"},
+		{name: "Inkling causal architecture", modelName: "custom", arch: "InklingForCausalLM", reasoning: "inkling", tool: "inkling"},
+		{name: "Inkling conditional architecture", modelName: "custom", arch: "InklingForConditionalGeneration", reasoning: "inkling", tool: "inkling"},
+		{name: "Muse Glimmer causal architecture", modelName: "custom", arch: "MuseGlimmerForCausalLM", reasoning: "muse_glimmer", tool: "muse_glimmer"},
+		{name: "Muse Glimmer conditional architecture", modelName: "custom", arch: "MuseGlimmerForConditionalGeneration", reasoning: "muse_glimmer", tool: "muse_glimmer"},
+		{name: "Qwen 3.5 causal architecture", modelName: "custom", arch: "Qwen3_5ForCausalLM", reasoning: "qwen3", tool: "qwen3_coder"},
+		{name: "Qwen 3.5 MoE causal architecture", modelName: "custom", arch: "Qwen3_5MoeForCausalLM", reasoning: "qwen3", tool: "qwen3_coder"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := map[string]interface{}{}
+			if tt.arch != "" {
+				config["architectures"] = []interface{}{tt.arch}
+			}
+			g := &Generator{
+				ModelConfig: config,
+				Param: model.PresetParam{
+					Metadata: model.Metadata{Name: tt.modelName},
+				},
+			}
+
+			g.ParseModelMetadata()
+
+			assert.Equal(t, tt.reasoning, g.Param.Metadata.ReasoningParser)
+			assert.Equal(t, tt.tool, g.Param.Metadata.ToolCallParser)
+		})
+	}
+}
+
 func TestTextConfigMerging(t *testing.T) {
 	cases := []struct {
 		name           string
